@@ -9,46 +9,139 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
-
 
 enum Privacy {
   PRIVATE
   PUBLIC
+  CONNECTS
+  CUSTOM
 }
 
-model NoteBook{
-  id String  @id @default(uuid())
-  title       String
-  content     String
-  privacy Privacy @default(PRIVATE)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum NotificationType {
+  LIKE
+  MENTION
+  COMMENT
 }
 
-model User{
-  id String  @id @default(uuid())
-  email String @unique
-  firstname  String
-  lastname String
-  middlename String ?
-  password String
-  isEmailVerified Boolean @default(false)
-  resetPasswordToken   String?            @unique
-  resetPasswordExpires String?            @unique
-  Token                Token[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model User {
+  id                    String         @id @default(uuid()) @map("_id") @db.ObjectId
+  email                 String         @unique
+  firstname             String
+  lastname              String
+  middlename            String?
+  password              String
+  isEmailVerified       Boolean        @default(false)
+  resetPasswordToken    String?        @unique
+  resetPasswordExpires  String?        @unique
+  Token                 Token[]
+  posts                 Post[]
+  likes                 Like[]
+  comments              Comment[]
+  followers             Follow[]       @relation(name: "UserFollows")
+  following             Follow[]       @relation(name: "UserFollowing")
+  sendNotifications     Notification[] @relation(name: "sender")
+  receivedNotifications Notification[] @relation(name: "receiver")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
 }
 
 model Token {
-  id        String   @id @default(uuid())
+  id        String   @id @default(uuid()) @map("_id") @db.ObjectId
   token     String   @unique
   expiresAt String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  userId    String   @db.ObjectId
+}
+
+model Like {
+  id        String   @id @default(uuid()) @map("_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   @db.ObjectId
+  commentId String?  @db.ObjectId
+  comment   Comment? @relation(fields: [commentId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(uuid()) @map("_id") @db.ObjectId
+  content   String
+  author    User     @relation(fields: [authorId], references: [id])
+  authorId  String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String   @db.ObjectId
+  likes     Like[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String      @id @default(uuid()) @map("_id") @db.ObjectId
+  content   String?
+  author    User        @relation(fields: [authorId], references: [id])
+  authorId  String      @db.ObjectId
+  privacy   Privacy     @default(PUBLIC)
+  tags      String[] // Hashtags or user mentions
+  postMedia PostMedia[]
+  likes     Like[]
+  comments  Comment[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Follow {
+  id          String   @id @default(uuid()) @map("_id") @db.ObjectId
+  follower    User     @relation(name: "UserFollows", fields: [followerId], references: [id])
+  followerId  String   @db.ObjectId
+  following   User     @relation(name: "UserFollowing", fields: [followingId], references: [id])
+  followingId String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  //@@index([followerId, followingId])
+
+  @@unique([followerId, followingId])
+}
+
+model Media {
+  id        String      @id @default(uuid()) @map("_id") @db.ObjectId
+  url       String
+  type      MediaType
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  posts     PostMedia[]
+}
+
+model PostMedia {
+  id        String   @id @default(uuid()) @map("_id") @db.ObjectId
+  postId    String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id])
+  mediaId   String   @db.ObjectId
+  media     Media    @relation(fields: [mediaId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id         String           @id @default(uuid()) @map("_id") @db.ObjectId
+  receiver   User             @relation(name: "receiver", fields: [receiverId], references: [id])
+  receiverId String           @db.ObjectId
+  sender     User             @relation(name: "sender", fields: [senderId], references: [id])
+  senderId   String           @db.ObjectId
+  type       NotificationType
+  postId     String?          @db.ObjectId
+  commentId  String?          @db.ObjectId
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 }

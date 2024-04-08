@@ -196,8 +196,11 @@ export const forgotPasswordController = async (
 
 export const resetPasswordController = async (req: Request, res: Response) => {
     const { resetToken } = req.params;
-    const { password } = req.body;
-  
+    const { password , comfirmPassword} = req.body;
+    
+    if (password === comfirmPassword)
+    throw new BadRequestError("Password do not Match");
+
     const user = await findUserByResetPasswordToken(resetToken);
   
     if (!user) throw new BadRequestError("Invalid reset token");
