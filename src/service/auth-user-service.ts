@@ -138,3 +138,4 @@ export const verifyUserEmailService = async (id: string): Promise<User> => {
       data: { isEmailVerified: true},
     });
 };
+

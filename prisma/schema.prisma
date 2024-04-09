@@ -63,6 +63,19 @@ model Token {
   userId    String   @db.ObjectId
 }
 
+model Follow {
+  id          String   @id @default(uuid()) @map("_id") @db.ObjectId
+  follower    User     @relation(name: "UserFollows", fields: [followerId], references: [id])
+  followerId  String   @db.ObjectId
+  following   User     @relation(name: "UserFollowing", fields: [followingId], references: [id])
+  followingId String   @db.ObjectId
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  //@@index([followerId, followingId])
+
+  @@unique([followerId, followingId])
+}
+
 model Like {
   id        String   @id @default(uuid()) @map("_id") @db.ObjectId
   user      User     @relation(fields: [userId], references: [id])
@@ -82,36 +95,26 @@ model Comment {
   authorId  String   @db.ObjectId
   post      Post     @relation(fields: [postId], references: [id])
   postId    String   @db.ObjectId
+  likeCount    Int         @default(0)
   likes     Like[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model Post {
-  id        String      @id @default(uuid()) @map("_id") @db.ObjectId
-  content   String?
-  author    User        @relation(fields: [authorId], references: [id])
-  authorId  String      @db.ObjectId
-  privacy   Privacy     @default(PUBLIC)
-  tags      String[] // Hashtags or user mentions
-  postMedia PostMedia[]
-  likes     Like[]
-  comments  Comment[]
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-}
-
-model Follow {
-  id          String   @id @default(uuid()) @map("_id") @db.ObjectId
-  follower    User     @relation(name: "UserFollows", fields: [followerId], references: [id])
-  followerId  String   @db.ObjectId
-  following   User     @relation(name: "UserFollowing", fields: [followingId], references: [id])
-  followingId String   @db.ObjectId
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  //@@index([followerId, followingId])
-
-  @@unique([followerId, followingId])
+  id           String      @id @default(uuid()) @map("_id") @db.ObjectId
+  content      String?
+  author       User        @relation(fields: [authorId], references: [id])
+  authorId     String      @db.ObjectId
+  privacy      Privacy     @default(PUBLIC)
+  likeCount    Int         @default(0)
+  commentCount Int         @default(0)
+  tags         String[] // Hashtags or user mentions
+  postMedia    PostMedia[]
+  likes        Like[]
+  comments     Comment[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
 
 model Media {
@@ -120,7 +123,7 @@ model Media {
   type      MediaType
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
-  posts     PostMedia[]
+  postMedia PostMedia[]
 }
 
 model PostMedia {
