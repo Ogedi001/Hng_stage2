@@ -37,58 +37,73 @@ export const createCommentService = async (data: CommentInputData) => {
 };
 
 export const LikeCommentService = async (data: LikeInputData) => {
-    return await prisma.$transaction([
-      prisma.like.create({
-        data: {
-          ...data,
+  return await prisma.$transaction([
+    prisma.like.create({
+      data: {
+        ...data,
+      },
+    }),
+    prisma.comment.update({
+      where: { id: data.commentId! },
+      data: {
+        likeCount: {
+          increment: 1,
         },
-      }),
-      prisma.comment.update({
-        where: { id: data.commentId! },
-        data: {
-          likeCount: {
-            increment: 1,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
           },
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              firstname: true,
-              lastname: true,
-              email: true,
-            },
-          },
-        },
-      }),
-    ]);
-}
+      },
+    }),
+  ]);
+};
 
 export const LikePostService = async (data: LikeInputData) => {
-    return await prisma.$transaction([
-      prisma.like.create({
-        data: {
-          ...data,
+  return await prisma.$transaction([
+    prisma.like.create({
+      data: {
+        ...data,
+      },
+    }),
+    prisma.post.update({
+      where: { id: data.postId },
+      data: {
+        likeCount: {
+          increment: 1,
         },
-      }),
-      prisma.post.update({
-        where: { id: data.postId },
-        data: {
-          likeCount: {
-            increment: 1,
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            firstname: true,
+            lastname: true,
+            email: true,
           },
         },
-        include: {
-          author: {
-            select: {
-              id: true,
-              firstname: true,
-              lastname: true,
-              email: true,
-            },
-          },
-        },
-      }),
-    ]);
-  }
+      },
+    }),
+  ]);
+};
 
+export const getCommentByIdService = async (id: string) => {
+  return prisma.comment.findUnique({
+    where: { id },
+    include: {
+      author: {
+        select: {
+          id: true,
+          firstname: true,
+          lastname: true,
+          email: true,
+        },
+      },
+    },
+  });
+};

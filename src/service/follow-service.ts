@@ -1,8 +1,10 @@
 import { Follow } from "@prisma/client";
 import { prisma } from "../client";
 
-export type FollowInputData = Pick<Follow, "followerId" | "followingId">;
-
+export interface FollowInputData {
+  followerId:string
+  followingId:string
+}
 
 
 export const fellowUserService = async (data: FollowInputData) => {

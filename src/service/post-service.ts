@@ -16,24 +16,20 @@ export const createPost = async (data: PostInputData) => {
   return post;
 };
 
-export const createMedia = async (data: MediaInputData, postId: string) => {
+
+export const createMedia = async (data: MediaInputData[], postId: string) => {
+ const media =  await Promise.all(data.map( async (mediaData)=>{
   const media = await prisma.media.create({
-    data: {
-      ...data,
-      postMedia: {
-        create: {
-          postId,
-        },
-      },
-    },
-    include: {
-      postMedia: {
-        select: {
-          postId: true,
-        },
-      },
-    },
+    data: mediaData,
   });
+  await prisma.postMedia.create({
+    data: {
+      postId,
+      mediaId: media.id,
+    },
+  })
+  return media;
+ }))
 
   return media;
 };

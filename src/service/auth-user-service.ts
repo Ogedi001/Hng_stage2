@@ -22,6 +22,7 @@ export const createUser = async (data: UserAccount):Promise<ReturnedUser> => {
     const user: ReturnedUser = await prisma.user.create({
         data: { ...data },
     });
+    console.log('Generated ID:', user.id);
     delete user.password;
 
     return user;
@@ -90,9 +91,12 @@ export const findUserByResetPasswordToken = async (
 
 export const findUserByIdService = async (
     userId: string
-  ): Promise<ReturnedUser | null> => {
+  ) => {
     return await prisma.user.findUnique({ 
-      where: { id: userId }
+      where: { id: userId },
+      include:{
+        followers:true
+      }
     });
 };
 

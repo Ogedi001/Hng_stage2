@@ -24,6 +24,7 @@ enum NotificationType {
   LIKE
   MENTION
   COMMENT
+  POST
 }
 
 enum MediaType {
@@ -32,7 +33,7 @@ enum MediaType {
 }
 
 model User {
-  id                    String         @id @default(uuid()) @map("_id") @db.ObjectId
+  id                    String        @id @default(auto()) @map("_id") @db.ObjectId
   email                 String         @unique
   firstname             String
   lastname              String
@@ -143,6 +144,7 @@ model Notification {
   sender     User             @relation(name: "sender", fields: [senderId], references: [id])
   senderId   String           @db.ObjectId
   type       NotificationType
+  read     Boolean  @default(false)
   postId     String?          @db.ObjectId
   commentId  String?          @db.ObjectId
   createdAt  DateTime         @default(now())

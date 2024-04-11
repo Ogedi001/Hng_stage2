@@ -22,7 +22,8 @@ import { BadRequestError } from "../errors";
 
 export const registerUserController = async (req: Request, res: Response) => {
   const { firstname, lastname, email, password, comfirmPassword } = req.body;
-  if (password === comfirmPassword)
+
+  if (password !== comfirmPassword)
     throw new BadRequestError("Password do not Match");
 
   const data = await createUser({
