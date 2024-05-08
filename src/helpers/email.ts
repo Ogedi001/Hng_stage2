@@ -1,10 +1,12 @@
 
+import 'dotenv/config'
 import { mailTransport } from "../utils";
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
 import ejs from "ejs";
 import { createUserTokenService, getUserResetPasswordTokenService } from "../service/auth-user-service";
+
 
 export const sendEmailVerificationLinkEmail = async (data: {
   userId: string;
@@ -15,7 +17,7 @@ export const sendEmailVerificationLinkEmail = async (data: {
   const template = fs.readFileSync(templatePath, "utf-8");
   const token = crypto.randomBytes(16).toString("hex");
   await createUserTokenService(data.userId, token);
-  const verificationURL = `${process.env.FRONTEND_BASE_URL}/login/${data.userId}/${token}`;
+  const verificationURL = `${process.env.FRONTEND_BASE_URL}/api/v1/auth/verify-email/${data.userId}/${token}`;
   const ejsData = {
     username: data.username,
     verificationURL,
@@ -23,7 +25,7 @@ export const sendEmailVerificationLinkEmail = async (data: {
   const htmlContent = ejs.render(template, ejsData);
 
   const mailOptions = {
-    from: `Notebook Api👻`,
+    from: process.env.SMTP_SENDER!,
     to: data.email,
     subject: "Welome on board ✔",
     html: htmlContent,
@@ -42,7 +44,7 @@ export const sendResetPasswordEmail = async (data: {
     const templatePath = path.join(__dirname, "../../emails/password-reset.ejs");
     const template = fs.readFileSync(templatePath, "utf-8");
     const resetToken = await getUserResetPasswordTokenService(data.email, false);
-    const resetURL = `${process.env.FRONTEND_BASE_URL}/passwordreset/${resetToken}`;
+    const resetURL = `${process.env.FRONTEND_BASE_URL}/api/v1/auth/password-reset/${resetToken}`;
     const ejsData = {
         resetURL
       };
@@ -51,7 +53,7 @@ export const sendResetPasswordEmail = async (data: {
 
   
     const mailOptions = {
-      from: process.env.SMTP_SENDER,
+      from: process.env.SMTP_SENDER!,
       to: data.email,
       subject: "Password Reset Notification",
       html: htmlContent,

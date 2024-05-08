@@ -60,7 +60,7 @@ export const userLikePostController = async (req: Request, res: Response) => {
     receiverId: post.authorId,
   };
   await triggerNotification(notificationData);
-  notificationSocket.emit(`${post.authorId}:post:like`);
+  notificationSocket.emit(`${post.authorId}:post:like`,newLike);
   return successResponse(res, StatusCodes.CREATED, newLike);
 };
 
@@ -89,7 +89,7 @@ export const userLikeCommentController = async (
   await triggerNotification(notificationData);
   notificationSocket.emit(`${post.authorId}:comment:like`)
   if(commentId !== user?.id){
-    notificationSocket.emit(`${comment.authorId}:comment:like`)
+    notificationSocket.emit(`${comment.authorId}:comment:like`,newLike)
   }
   return successResponse(res, StatusCodes.CREATED, newLike);
 };

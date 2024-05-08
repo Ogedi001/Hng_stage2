@@ -10,3 +10,4 @@ const config={
     },
 }
 export const mailTransport = nodemailer.createTransport(config)
+

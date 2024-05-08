@@ -60,7 +60,7 @@ app.use(cors(corsOptions));
 
 const server = createServer(app);
 const io = new Server(server, { cors: corsOptions });
-//io.use(socketAuthMiddleware)
+//io.of("notification").use(socketAuthMiddleware);
 
 let socket: Socket;
 io.of("notification").on("connection", (soc) => {

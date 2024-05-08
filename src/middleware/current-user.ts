@@ -36,7 +36,6 @@ export const currentUserMiddleware: RequestHandler  = async (
       .status(StatusCodes.UNAUTHORIZED)
       .json({ message: "User Not Logged In" });
   }
-  next();
 };
 
 
