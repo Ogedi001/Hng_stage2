@@ -9,6 +9,7 @@ import {
 } from "../helpers";
 import { NextFunction, Request, Response } from "express";
 import {
+  createRole,
   createUser,
   findTokenService,
   findUser,
@@ -19,18 +20,20 @@ import {
   verifyUserEmailService,
 } from "../service/auth-user-service";
 import { BadRequestError } from "../errors";
+import { RoleName } from "@prisma/client";
+
 
 export const registerUserController = async (req: Request, res: Response) => {
   const { firstname, lastname, email, password, comfirmPassword } = req.body;
-
   if (password !== comfirmPassword)
     throw new BadRequestError("Password do not Match");
-
+  const role = await createRole(RoleName.USER)
   const data = await createUser({
     firstname,
     lastname,
     email,
     password,
+    roleId:role.id
   });
 
   await sendEmailVerificationLinkEmail({
@@ -99,6 +102,9 @@ export const loginUserController = async (req: Request, res: Response) => {
     );
   }
 
+  if (!user.isEnabled){throw new BadRequestError(
+    "Account disabled!🙁 Visit our support group"
+  );}
   const passwordMatch = await Password.comparePassword(
     password,
     user?.password!
@@ -112,6 +118,10 @@ export const loginUserController = async (req: Request, res: Response) => {
     firstname: user.firstname,
     lastname: user.lastname,
     isEmailVerified: true,
+    role:{
+      roleId:user.roleId,
+      name:user.role.name
+    }
   });
 
   delete user.password;
@@ -159,6 +169,10 @@ export const userUpdatePasswordController = async (
     firstname: user.firstname,
     lastname: user.lastname,
     isEmailVerified: user.isEmailVerified,
+    role:{
+      roleId:user.roleId,
+      name:user.role.name
+    }
   });
 
   // remove password from the user object

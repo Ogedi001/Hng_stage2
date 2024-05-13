@@ -19,6 +19,7 @@ import { applicationRoutes } from "./routes";
 
 import logger from "./Logger";
 import { Server, Socket } from "socket.io";
+import { socketAuthMiddleware } from "./middleware/socket-auth";
 
 const app: Application = express();
 
@@ -60,7 +61,7 @@ app.use(cors(corsOptions));
 
 const server = createServer(app);
 const io = new Server(server, { cors: corsOptions });
-//io.of("notification").use(socketAuthMiddleware);
+io.of("notification").use(socketAuthMiddleware);
 
 let socket: Socket;
 io.of("notification").on("connection", (soc) => {

@@ -1,28 +1,65 @@
 import {
     User,
     Token,
+    RoleName,
+    Role,
+    Permission,
 } from "@prisma/client";
 import { prisma } from "../client";
 import crypto from "crypto";
+import { permissionData} from "../data/permissionSeed";
   
 export type UserAccount = Partial<Pick<User,'resetPasswordExpires'|'resetPasswordToken'|'middlename'>> & Pick<
     User,
-    'firstname'|'lastname'|'email'|'password'
+    'firstname'|'lastname'|'email'|'password'|'roleId'
   >;
 
-export type ReturnedUser = Partial<Pick<User,'password'>> &
+  export type UserData = Partial<Pick<User, "password">> &
   Omit<User, "password">;
+
+export interface UserRole{
+    id?:string,
+    name:string
+  }
+
+  export type ReturnedUser ={
+    role:UserRole
+  }& UserData
 
 export type UserSettings = Pick<
   User,
   "firstname" | "lastname" |'middlename'
 >;
 
+
+export const createRole= async (name:RoleName):Promise<Role>=>{
+  const existingRole = await prisma.role.findFirst({ where: { name} });
+  
+  if (!existingRole) {
+    return prisma.role.create({ data: { name ,
+      permissions:{
+        createMany:{
+          data:permissionData(name)
+        }
+      }
+    },
+     });
+  }
+  return existingRole;
+}
+
 export const createUser = async (data: UserAccount):Promise<ReturnedUser> => {
     const user: ReturnedUser = await prisma.user.create({
         data: { ...data },
+        include:{
+          role:{
+            select:{
+              name:true
+            }
+          }
+        }
     });
-    console.log('Generated ID:', user.id);
+   
     delete user.password;
 
     return user;
@@ -30,9 +67,16 @@ export const createUser = async (data: UserAccount):Promise<ReturnedUser> => {
 
 export const findUser = async (
     email: string
-  ): Promise<ReturnedUser | null> => {
-    return await prisma.user.findUnique({ where: { email } });
+ ):Promise<ReturnedUser|null>=>{
+    return await prisma.user.findUnique({ where: { email },include:{
+      role:{
+        select:{
+          name:true
+        }
+      }
+    }});
 };
+
 
 export const getUserResetPasswordTokenService = async (
     email: string,
