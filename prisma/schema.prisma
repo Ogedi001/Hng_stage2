@@ -19,7 +19,7 @@ enum RoleName {
   MODERATOR
 }
 
-enum UserActivityLogType {
+enum ActivityLogType {
   LOGIN
   LOGOUT
   PERMISSION_CHANGE
@@ -69,7 +69,7 @@ model User {
   sendNotifications     Notification[] @relation(name: "sender")
   receivedNotifications Notification[] @relation(name: "receiver")
   auditLog              AuditLog[]
-  createdAt        DateTime       @default(now())
+  createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
 }
 
@@ -98,15 +98,18 @@ model Token {
 
 model AuditLog {
   id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
-  activityType          UserActivityLogType
+  logType               ActivityLogType 
   logOut_logs           Logout_Log[]
   logIn_logs            LogIn_Log[]
   roleChange_logs       RoleChange_Log[]
   permissionChange_Logs PermissionChange_Log[]
   userId                String                 @db.ObjectId
-  user                  User                   @relation(fields: [userId], references: [id])
+  createdBy             User                   @relation(fields: [userId], references: [id])
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  
+  @@unique([userId, logType])
+  @@index([userId, id])
 }
 
 model Logout_Log {
@@ -115,8 +118,8 @@ model Logout_Log {
   zipCode             String
   timeZone_name       String
   timeZone_gmt_offset String
-  audiLogId           String   @db.ObjectId
-  auditLog            AuditLog @relation(fields: [audiLogId], references: [id])
+  auditLogId          String   @db.ObjectId
+  auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
   createdAt           DateTime @default(now())
 }
 
@@ -126,27 +129,9 @@ model LogIn_Log {
   zipCode             String
   timeZone_name       String
   timeZone_gmt_offset String
-  audiLogId           String   @db.ObjectId
-  auditLog            AuditLog @relation(fields: [audiLogId], references: [id])
+  auditLogId          String   @db.ObjectId
+  auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
   createdAt           DateTime @default(now())
-}
-
-model RoleChange_Log {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  preRole     RoleName
-  newRole     RoleName
-  description String
-  audiLogId   String   @db.ObjectId
-  auditLog    AuditLog @relation(fields: [audiLogId], references: [id])
-  createdAt   DateTime @default(now())
-}
-
-model PermissionChange_Log {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  description String
-  createdAt   DateTime @default(now())
-  audiLogId   String   @db.ObjectId
-  auditLog    AuditLog @relation(fields: [audiLogId], references: [id])
 }
 
 model Role {
@@ -157,6 +142,18 @@ model Role {
   locations   String[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
+
+  @@index([name, id])
+}
+
+model RoleChange_Log {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  preRole     RoleName
+  newRole     RoleName
+  description String
+  auditLogId  String   @db.ObjectId
+  auditLog    AuditLog @relation(fields: [auditLogId], references: [id])
+  createdAt   DateTime @default(now())
 }
 
 model Permission {
@@ -169,6 +166,25 @@ model Permission {
   role       Role     @relation(fields: [roleId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([name, id])
+}
+
+model PermissionChange_Log {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  permissionName  String
+  pre_can_read    Boolean?
+  pre_can_write   Boolean?
+  pre_can_delete  Boolean?
+  post_can_read   Boolean?
+  post_can_write  Boolean?
+  post_can_delete Boolean?
+  description     String
+  createdAt       DateTime @default(now())
+  auditLogId      String   @db.ObjectId
+  auditLog        AuditLog @relation(fields: [auditLogId], references: [id])
+
+  @@index([permissionName, id])
 }
 
 model Follow {

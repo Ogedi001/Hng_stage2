@@ -56,7 +56,7 @@ import { RoleName } from "@prisma/client";
     }
 }
 
-    const value = permissionData(RoleName.ADMIN)
-    console.log(value)
-  
-  
+    // const value = permissionData(RoleName.ADMIN)
+    // console.log(value)
+
+   
