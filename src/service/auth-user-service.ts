@@ -57,70 +57,95 @@ export const createUser = async (data: UserAccount): Promise<ReturnedUser> => {
   return user;
 };
 
-// export const createLog = async (data: LogData) => {
-//   let logdata: any;
-//   const {
-//     userId,
-//     logType,
-//     location,
-//     zipCode,
-//     timeZone_name,
-//     timeZone_gmt_offset,
-//   } = data;
+export const createLog = async (data: LogData) => {
+  const { userId, logType } = data;
 
-//   const createdata = {
-//     create: {
-//       location,
-//       zipCode,
-//       timeZone_name,
-//       timeZone_gmt_offset,
-//     },
-//   };
-//   switch (logType) {
-//     case "LOGIN":
-//       logdata = {
-//         logIn_logs: createdata,
-//       };
-//       break;
-//     case "LOGOUT":
-//       logdata = {
-//         logOut_logs: createdata,
-//       };
-//       break;
-//     case "ROLE_ASSIGNMENT":
-//       logdata = {
-//         roleChange_logs: {
-//           create: {
-//             newRole: data.newRole,
-//             preRole: data.preRole,
-//             description: data.description,
-//           },
-//         },
-//       };
-//       break;
-//     case "PERMISSION_CHANGE":
-//       logdata = {
-//         permissionChange_Logs: {
-//           create: {
-//             description: data.description,
-//             permissionName: data.permissionName,
-//             ...data.permissionBols,
-//           },
-//         },
-//       };
-//       break;
-//     default:
-//       throw new Error(`Unsupported log type: ${logType}`);
-//   }
-//  const userLog = await prisma.auditLog.create({
-//     data: {
-//       logType,
-//       userId,
-//       ...logdata,
-//     },
-//   });
-//   return userLog
-// };
+  const auditLogData = {
+    userId,
+    logType,
+  };
+
+  const auditLogWhere = {
+    userId_logType: {
+      userId,
+      logType,
+    },
+  };
+
+  let userLog: any;
+
+  const createdata = {
+    create: {
+      location: data.location!,
+      zipCode: data.zipCode!,
+      timeZone_name: data.timeZone_name!,
+      timeZone_gmt_offset: data.timeZone_gmt_offset!,
+    },
+  };
+  switch (logType) {
+    case "LOGIN":
+      userLog = await prisma.logIn_Log.create({
+        data: {
+          ...createdata.create,
+          auditLog: {
+            connectOrCreate: {
+              where: auditLogWhere,
+              create: auditLogData,
+            },
+          },
+        },
+      });
+      break;
+    case "LOGOUT":
+      userLog = await prisma.logout_Log.create({
+        data: {
+          ...createdata.create,
+          auditLog: {
+            connectOrCreate: {
+              where: auditLogWhere,
+              create: auditLogData,
+            },
+          },
+        },
+      });
+      break;
+    case "ROLE_ASSIGNMENT":
+      userLog = await prisma.roleChange_Log.create({
+        data: {
+          newRole: data.newRole!,
+          preRole: data.preRole!,
+          description: data.description!,
+          auditLog: {
+            connectOrCreate: {
+              where: auditLogWhere,
+              create: auditLogData,
+            },
+          },
+        },
+      });
+      break;
+    case "PERMISSION_CHANGE":
+      userLog = await prisma.permissionChange_Log.create({
+        data: {
+          description: data.description!,
+          permissionName: data.permissionName!,
+          ...data.permissionBols,
+          auditLog: {
+            connectOrCreate: {
+              where: auditLogWhere,
+              create: auditLogData,
+            },
+          },
+        },
+      });
+      break;
+    default:
+      throw new Error(`Unsupported log type: ${logType}`);
+  }
+
+  return userLog;
+};
+
 
 export const findUser = async (email: string): Promise<ReturnedUser | null> => {
   return await prisma.user.findUnique({
@@ -239,93 +264,4 @@ export const verifyUserEmailService = async (id: string): Promise<User> => {
     where: { id },
     data: { isEmailVerified: true },
   });
-};
-
-export const createLog = async (data: LogData) => {
-  const { userId, logType } = data;
-
-  const auditLogData = {
-    userId,
-    logType,
-  };
-
-  const auditLogWhere = {
-    userId_logType: {
-      userId,
-      logType,
-    },
-  };
-
-  let userLog: any;
-
-  const createdata = {
-    create: {
-      location: data.location!,
-      zipCode: data.zipCode!,
-      timeZone_name: data.timeZone_name!,
-      timeZone_gmt_offset: data.timeZone_gmt_offset!,
-    },
-  };
-  switch (logType) {
-    case "LOGIN":
-      userLog = await prisma.logIn_Log.create({
-        data: {
-          ...createdata.create,
-          auditLog: {
-            connectOrCreate: {
-              where: auditLogWhere,
-              create: auditLogData,
-            },
-          },
-        },
-      });
-      break;
-    case "LOGOUT":
-      userLog = await prisma.logout_Log.create({
-        data: {
-          ...createdata.create,
-          auditLog: {
-            connectOrCreate: {
-              where: auditLogWhere,
-              create: auditLogData,
-            },
-          },
-        },
-      });
-      break;
-    case "ROLE_ASSIGNMENT":
-      userLog = await prisma.roleChange_Log.create({
-        data: {
-          newRole: data.newRole!,
-          preRole: data.preRole!,
-          description: data.description!,
-          auditLog: {
-            connectOrCreate: {
-              where: auditLogWhere,
-              create: auditLogData,
-            },
-          },
-        },
-      });
-      break;
-    case "PERMISSION_CHANGE":
-      userLog = await prisma.permissionChange_Log.create({
-        data: {
-          description: data.description!,
-          permissionName: data.permissionName!,
-          ...data.permissionBols,
-          auditLog: {
-            connectOrCreate: {
-              where: auditLogWhere,
-              create: auditLogData,
-            },
-          },
-        },
-      });
-      break;
-    default:
-      throw new Error(`Unsupported log type: ${logType}`);
-  }
-
-  return userLog;
 };
