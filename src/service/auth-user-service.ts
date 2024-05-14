@@ -65,6 +65,8 @@ export const createUser = async (data: UserAccount):Promise<ReturnedUser> => {
     return user;
 };
 
+const create
+
 export const findUser = async (
     email: string
  ):Promise<ReturnedUser|null>=>{

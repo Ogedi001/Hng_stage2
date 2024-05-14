@@ -52,13 +52,14 @@ model User {
   lastname              String
   middlename            String?
   password              String
+  isLoggedIn            Boolean        @default(false)
   isEmailVerified       Boolean        @default(false)
-  isEnabled                 Boolean             @default(true)
+  isEnabled             Boolean        @default(true)
   resetPasswordToken    String?        @unique
   resetPasswordExpires  String?        @unique
   roleId                String         @db.ObjectId
   role                  Role           @relation(fields: [roleId], references: [id])
-  userProfile               UserProfile?
+  userProfile           UserProfile?
   Token                 Token[]
   posts                 Post[]
   likes                 Like[]
@@ -67,13 +68,13 @@ model User {
   following             Follow[]       @relation(name: "UserFollowing")
   sendNotifications     Notification[] @relation(name: "sender")
   receivedNotifications Notification[] @relation(name: "receiver")
-  auditLog               AuditLog[]
-  DateRegistered        DateTime       @default(now())
+  auditLog              AuditLog[]
+  createdAt        DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
 }
 
 model UserProfile {
-  id                    String         @id @default(auto()) @map("_id") @db.ObjectId
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
   user            User     @relation(fields: [userId], references: [id])
   userId          String   @unique @db.ObjectId
   bio             String?
@@ -96,38 +97,78 @@ model Token {
 }
 
 model AuditLog {
-  id           String              @id @default(auto()) @map("_id") @db.ObjectId
-  loginTime    DateTime?
-  loginAddress String?
-  logoutTime   DateTime?
-  activityType UserActivityLogType
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  isLoggedIn   Boolean             @default(false)
-  userId       String              @db.ObjectId
-  user         User                @relation(fields: [userId], references: [id])
+  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
+  activityType          UserActivityLogType
+  logOut_logs           Logout_Log[]
+  logIn_logs            LogIn_Log[]
+  roleChange_logs       RoleChange_Log[]
+  permissionChange_Logs PermissionChange_Log[]
+  userId                String                 @db.ObjectId
+  user                  User                   @relation(fields: [userId], references: [id])
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+}
+
+model Logout_Log {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  location            String //country //city
+  zipCode             String
+  timeZone_name       String
+  timeZone_gmt_offset String
+  audiLogId           String   @db.ObjectId
+  auditLog            AuditLog @relation(fields: [audiLogId], references: [id])
+  createdAt           DateTime @default(now())
+}
+
+model LogIn_Log {
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  location            String //country //city
+  zipCode             String
+  timeZone_name       String
+  timeZone_gmt_offset String
+  audiLogId           String   @db.ObjectId
+  auditLog            AuditLog @relation(fields: [audiLogId], references: [id])
+  createdAt           DateTime @default(now())
+}
+
+model RoleChange_Log {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  preRole     RoleName
+  newRole     RoleName
+  description String
+  audiLogId   String   @db.ObjectId
+  auditLog    AuditLog @relation(fields: [audiLogId], references: [id])
+  createdAt   DateTime @default(now())
+}
+
+model PermissionChange_Log {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  description String
+  createdAt   DateTime @default(now())
+  audiLogId   String   @db.ObjectId
+  auditLog    AuditLog @relation(fields: [audiLogId], references: [id])
 }
 
 model Role {
   id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name    RoleName     @unique @default(USER)
+  name        RoleName     @unique @default(USER)
   user        User[]
   permissions Permission[]
-  locations      String[]
+  locations   String[]
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }
 
 model Permission {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  name String   @unique
-  can_read       Boolean  @default(false)
-  can_write      Boolean  @default(false)
-  can_delete     Boolean  @default(false)
-  roleId         String   @db.ObjectId
-  role           Role     @relation(fields: [roleId], references: [id])
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  name       String   @unique
+  can_read   Boolean  @default(false)
+  can_write  Boolean  @default(false)
+  can_delete Boolean  @default(false)
+  roleId     String   @db.ObjectId
+  role       Role     @relation(fields: [roleId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Follow {

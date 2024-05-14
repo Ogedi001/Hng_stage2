@@ -126,6 +126,7 @@ export const loginUserController = async (req: Request, res: Response) => {
 
   delete user.password;
 
+  
   return successResponse(res, StatusCodes.OK, {
     user,
     token: userJWT,
