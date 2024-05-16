@@ -1,8 +1,10 @@
-import { User, Token, RoleName, Role, ActivityLogType } from "@prisma/client";
+import { User, Token} from "@prisma/client";
 import { prisma } from "../client";
 import crypto from "crypto";
+
+import { LogData, UserPermissions,UserRole } from "../interface";
 import { permissionData } from "../data/permissionSeed";
-import { LogData } from "../interface/logs";
+import { name } from "ejs";
 
 export type UserAccount = Partial<
   Pick<User, "resetPasswordExpires" | "resetPasswordToken" | "middlename">
@@ -11,44 +13,41 @@ export type UserAccount = Partial<
 
 export type UserData = Partial<Pick<User, "password">> & Omit<User, "password">;
 
-export interface UserRole {
-  id?: string;
-  name: string;
-}
+
 
 export type ReturnedUser = {
   role: UserRole;
+  permissions:UserPermissions[]
 } & UserData;
 
 export type UserSettings = Pick<User, "firstname" | "lastname" | "middlename">;
 
-export const createRole = async (name: RoleName): Promise<Role> => {
-  const existingRole = await prisma.role.findFirst({ where: { name } });
 
-  if (!existingRole) {
-    return prisma.role.create({
-      data: {
-        name,
-        permissions: {
-          createMany: {
-            data: permissionData(name),
-          },
-        },
-      },
-    });
-  }
-  return existingRole;
-};
+export const createUser = async (data: UserAccount) => {
+  const permissions =permissionData(name).map(permission=>({...permission,roleId:data.roleId}))
 
-export const createUser = async (data: UserAccount): Promise<ReturnedUser> => {
-  const user: ReturnedUser = await prisma.user.create({
-    data: { ...data },
+  const user:ReturnedUser = await prisma.user.create({
+    data: { ...data,
+      permissions:{
+        createMany:{
+          data:permissions
+        }
+      }
+     },
     include: {
       role: {
         select: {
           name: true,
         },
       },
+      permissions:{
+        select:{
+          name:true,
+          can_read:true,
+          can_write:true,
+          can_delete:true
+        }
+      }
     },
   });
 
@@ -156,6 +155,14 @@ export const findUser = async (email: string): Promise<ReturnedUser | null> => {
           name: true,
         },
       },
+      permissions:{
+        select:{
+          name:true,
+          can_read:true,
+          can_write:true,
+          can_delete:true
+        }
+      }
     },
   });
 };

@@ -56,7 +56,49 @@ import { RoleName } from "@prisma/client";
     }
 }
 
-    // const value = permissionData(RoleName.ADMIN)
-    // console.log(value)
+  //  const value = permissionData(RoleName.ADMIN)
+//     console.log(value)
+// const data = value.map(permission=>({...permission,roleId:'djdjd'}))
+// console.log(data)
 
-   
+const arrayAll=[
+  {
+    role:'i',
+    age:20,
+    name:'u2'
+  },
+  {
+    role:'i',
+    age:5,
+    name:'u1'
+  },
+  {
+    role:'i',
+    age:6,
+    name:'u1'
+  },
+  {
+    role:'i',
+    age:4,
+    name:'u2'
+  }
+]
+
+const arraySome=[
+  {
+    role:'i',
+    age:5,
+    name:'u1'
+  },
+  {
+    role:'i',
+    age:6,
+    name:'u1'
+  },
+]
+const absentPermision= arrayAll.filter(arryA=>{
+  const p =  arraySome.some(arrySome=>arryA.name!=arrySome.name)
+  return p
+  }).map(d=>({name:d.name}))
+
+  console.log(absentPermision)

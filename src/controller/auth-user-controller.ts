@@ -9,7 +9,6 @@ import {
 } from "../helpers";
 import { NextFunction, Request, Response } from "express";
 import {
-  createRole,
   createUser,
   findTokenService,
   findUser,
@@ -21,6 +20,7 @@ import {
 } from "../service/auth-user-service";
 import { BadRequestError } from "../errors";
 import { RoleName } from "@prisma/client";
+import { createRole } from "../service/role-permisions-service";
 
 
 export const registerUserController = async (req: Request, res: Response) => {

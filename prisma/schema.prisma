@@ -24,6 +24,8 @@ enum ActivityLogType {
   LOGOUT
   PERMISSION_CHANGE
   ROLE_ASSIGNMENT
+  NEW_ROLE
+  NEW_PERMISSION
 }
 
 enum Privacy {
@@ -68,6 +70,7 @@ model User {
   following             Follow[]       @relation(name: "UserFollowing")
   sendNotifications     Notification[] @relation(name: "sender")
   receivedNotifications Notification[] @relation(name: "receiver")
+  permissions           Permission[]
   auditLog              AuditLog[]
   createdAt             DateTime       @default(now())
   updatedAt             DateTime       @updatedAt
@@ -107,7 +110,7 @@ model AuditLog {
   createdBy             User                   @relation(fields: [userId], references: [id])
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
-  
+
   @@unique([userId, logType])
   @@index([userId, id])
 }
@@ -156,6 +159,7 @@ model RoleChange_Log {
   createdAt   DateTime @default(now())
 }
 
+
 model Permission {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   name       String   @unique
@@ -164,10 +168,13 @@ model Permission {
   can_delete Boolean  @default(false)
   roleId     String   @db.ObjectId
   role       Role     @relation(fields: [roleId], references: [id])
+  userId     String?   @db.ObjectId
+  user       User?     @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([name, id])
+  @@unique([name,userId])
 }
 
 model PermissionChange_Log {
