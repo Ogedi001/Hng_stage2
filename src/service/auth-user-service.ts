@@ -2,7 +2,7 @@ import { User, Token} from "@prisma/client";
 import { prisma } from "../client";
 import crypto from "crypto";
 
-import { LogData, UserPermissions,UserRole } from "../interface";
+import { LogData, UserPermissions,UserRole, UserUpdateData } from "../interface";
 import { permissionData } from "../data/permissionSeed";
 import { name } from "ejs";
 
@@ -239,6 +239,35 @@ export const updatePassword = async (email: string, password: string) => {
   return user;
 };
 
+export const updateUser_service= async(id:string,updateData:UserUpdateData):Promise<ReturnedUser>=>{
+  const data: Partial<UserUpdateData> = {};
+  if (updateData.firstname !== undefined) data.firstname = updateData.firstname;
+  if (updateData.lastname !== undefined) data.lastname = updateData.lastname;
+  if (updateData.middlename !== undefined) data.middlename = updateData.middlename;
+  if (updateData.isLoggedIn !== undefined) data.isLoggedIn = updateData.isLoggedIn;
+  if (updateData.isEnabled !== undefined) data.isEnabled = updateData.isEnabled;
+  if (updateData.roleId !== undefined) data.roleId = updateData.roleId;
+
+  const user:ReturnedUser = await prisma.user.update({where:{id},data,
+    include: {
+      role: {
+        select: {
+          name: true,
+        },
+      },
+      permissions:{
+        select:{
+          name:true,
+          can_read:true,
+          can_write:true,
+          can_delete:true
+        }
+      }
+    },
+  })
+return user
+}
+
 export const createUserTokenService = async (
   userId: string,
   token: string
@@ -272,3 +301,7 @@ export const verifyUserEmailService = async (id: string): Promise<User> => {
     data: { isEmailVerified: true },
   });
 };
+
+
+
+  

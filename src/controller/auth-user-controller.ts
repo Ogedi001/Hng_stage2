@@ -16,6 +16,7 @@ import {
   findUserByResetPasswordToken,
   getUserResetPasswordTokenService,
   updatePassword,
+  updateUser_service,
   verifyUserEmailService,
 } from "../service/auth-user-service";
 import { BadRequestError } from "../errors";
@@ -123,12 +124,12 @@ export const loginUserController = async (req: Request, res: Response) => {
       name:user.role.name
     }
   });
-
-  delete user.password;
+  const updatedUser = await updateUser_service(user.id,{isLoggedIn:true})
+  delete updatedUser.password;
 
   
   return successResponse(res, StatusCodes.OK, {
-    user,
+    updatedUser,
     token: userJWT,
   });
 };

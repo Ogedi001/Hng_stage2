@@ -92,7 +92,7 @@ await prisma.permission.createMany({
 })
 }
 
-export const updatePermission= async (id:string,data:UserPermissions) => {
+export const updatePermissionService= async (id:string,data:UserPermissions) => {
   return await prisma.permission.update({
     where: {
       id
@@ -102,6 +102,14 @@ export const updatePermission= async (id:string,data:UserPermissions) => {
 
 }
 
-//create new role
 
 
+export const createPermission_Service =async(data:UserPermissions)=>{
+  const fields = {
+    roleId: data.roleId!,
+    ...data,
+  }
+return await prisma.permission.create({
+  data:fields
+})
+}
