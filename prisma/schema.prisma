@@ -24,8 +24,6 @@ enum ActivityLogType {
   LOGOUT
   PERMISSION_CHANGE
   ROLE_ASSIGNMENT
-  NEW_ROLE
-  NEW_PERMISSION
 }
 
 enum Privacy {

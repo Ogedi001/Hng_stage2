@@ -9,6 +9,7 @@ import {
 } from "../helpers";
 import { NextFunction, Request, Response } from "express";
 import {
+  createLog,
   createUser,
   findTokenService,
   findUser,
@@ -20,21 +21,21 @@ import {
   verifyUserEmailService,
 } from "../service/auth-user-service";
 import { BadRequestError } from "../errors";
-import { RoleName } from "@prisma/client";
+import { ActivityLogType, RoleName } from "@prisma/client";
 import { createRole } from "../service/role-permisions-service";
-
+import { getUserLocationInfo } from "../helpers/location";
 
 export const registerUserController = async (req: Request, res: Response) => {
   const { firstname, lastname, email, password, comfirmPassword } = req.body;
   if (password !== comfirmPassword)
     throw new BadRequestError("Password do not Match");
-  const role = await createRole(RoleName.USER)
+  const role = await createRole(RoleName.USER);
   const data = await createUser({
     firstname,
     lastname,
     email,
     password,
-    roleId:role.id
+    roleId: role.id,
   });
 
   await sendEmailVerificationLinkEmail({
@@ -103,9 +104,9 @@ export const loginUserController = async (req: Request, res: Response) => {
     );
   }
 
-  if (!user.isEnabled){throw new BadRequestError(
-    "Account disabled!🙁 Visit our support group"
-  );}
+  if (!user.isEnabled) {
+    throw new BadRequestError("Account disabled!🙁 Visit our support group");
+  }
   const passwordMatch = await Password.comparePassword(
     password,
     user?.password!
@@ -119,15 +120,28 @@ export const loginUserController = async (req: Request, res: Response) => {
     firstname: user.firstname,
     lastname: user.lastname,
     isEmailVerified: true,
-    role:{
-      roleId:user.roleId,
-      name:user.role.name
-    }
+    role: {
+      roleId: user.roleId,
+      name: user.role.name,
+    },
   });
-  const updatedUser = await updateUser_service(user.id,{isLoggedIn:true})
+  const updatedUser = await updateUser_service(user.id, { isLoggedIn: true });
   delete updatedUser.password;
 
+  const locationInfo = await getUserLocationInfo(req.body.ipAddress);
+  const location = `${locationInfo.country_name} ${locationInfo.state_prov} ${locationInfo.district} ${locationInfo.city}`;
+  const zipCode = locationInfo.zipcode;
+  const timeZone_gmt_offset = locationInfo.time_zone.name;
+  locationInfo.time_zone.offset;
+
   
+  await createLog({
+    logType: ActivityLogType.LOGIN,
+    userId: user.id,
+    location,
+    timeZone_gmt_offset,
+    zipCode,
+  });
   return successResponse(res, StatusCodes.OK, {
     updatedUser,
     token: userJWT,
@@ -135,8 +149,24 @@ export const loginUserController = async (req: Request, res: Response) => {
 };
 
 export const logOutController = async (req: Request, res: Response) => {
+  const user = req.currentUser!
   const token = req.headers.authorization!.split(" ")[1];
   await blacklistJWTtoken(token);
+
+  const locationInfo = await getUserLocationInfo(req.body.ipAddress);
+  const location = `${locationInfo.country_name} ${locationInfo.state_prov} ${locationInfo.district} ${locationInfo.city}`;
+  const zipCode = locationInfo.zipcode;
+  const timeZone_gmt_offset = locationInfo.time_zone.name;
+  locationInfo.time_zone.offset;
+
+  await createLog({
+    logType: ActivityLogType.LOGOUT,
+    userId: user.id,
+    location,
+    timeZone_gmt_offset,
+    zipCode,
+  });
+
   return successResponse(res, StatusCodes.OK, {
     message: "Logged out successfully",
   });
@@ -171,10 +201,10 @@ export const userUpdatePasswordController = async (
     firstname: user.firstname,
     lastname: user.lastname,
     isEmailVerified: user.isEmailVerified,
-    role:{
-      roleId:user.roleId,
-      name:user.role.name
-    }
+    role: {
+      roleId: user.roleId,
+      name: user.role.name,
+    },
   });
 
   // remove password from the user object
@@ -186,48 +216,44 @@ export const userUpdatePasswordController = async (
   });
 };
 
-
 export const forgotPasswordController = async (
-    req: Request,
-    res: Response,
-    next:NextFunction
-  ) => {
-    const { email } = req.body;
-  
-    const user = await findUser(email);
-  
-    if (!user) throw new BadRequestError("User not found");
-  
-    try {
-      await sendResetPasswordEmail({ email: user.email })
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { email } = req.body;
 
-      return successResponse(res, StatusCodes.OK, {
-        message: "password reset email sent",
-      });
-    } catch (error) {
-      await getUserResetPasswordTokenService(user.email, true);
-      return next(error);
-    }
+  const user = await findUser(email);
+
+  if (!user) throw new BadRequestError("User not found");
+
+  try {
+    await sendResetPasswordEmail({ email: user.email });
+
+    return successResponse(res, StatusCodes.OK, {
+      message: "password reset email sent",
+    });
+  } catch (error) {
+    await getUserResetPasswordTokenService(user.email, true);
+    return next(error);
+  }
 };
-
 
 export const resetPasswordController = async (req: Request, res: Response) => {
-    const { resetToken } = req.params;
-    const { password , comfirmPassword} = req.body;
-    
-    if (password === comfirmPassword)
+  const { resetToken } = req.params;
+  const { password, comfirmPassword } = req.body;
+
+  if (password === comfirmPassword)
     throw new BadRequestError("Password do not Match");
 
-    const user = await findUserByResetPasswordToken(resetToken);
-  
-    if (!user) throw new BadRequestError("Invalid reset token");
-  
-    await updatePassword(user.email, password);
-    await getUserResetPasswordTokenService(user.email, true);
-  
-    return successResponse(res, StatusCodes.CREATED, {
-      message: "password reset",
-    });
-};
- 
+  const user = await findUserByResetPasswordToken(resetToken);
 
+  if (!user) throw new BadRequestError("Invalid reset token");
+
+  await updatePassword(user.email, password);
+  await getUserResetPasswordTokenService(user.email, true);
+
+  return successResponse(res, StatusCodes.CREATED, {
+    message: "password reset",
+  });
+};
