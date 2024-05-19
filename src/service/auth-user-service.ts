@@ -23,9 +23,8 @@ export type ReturnedUser = {
 export type UserSettings = Pick<User, "firstname" | "lastname" | "middlename">;
 
 
-export const createUser = async (data: UserAccount) => {
+export const createUser = async (name:string,data: UserAccount) => {
   const permissions =permissionData(name).map(permission=>({...permission,roleId:data.roleId}))
-
   const user:ReturnedUser = await prisma.user.create({
     data: { ...data,
       permissions:{

@@ -30,6 +30,23 @@ export const findPermision = async (name: string) => {
   });
 };
 
+export const getUserPermision = async (userId: string,name:string) => {
+  const permissons = await prisma.permission.findMany({
+    where: {
+      name,
+      role: {
+        user: {
+          some: {
+            id: userId,
+          },
+        },
+      },
+    },
+  });
+  return permissons;
+};
+
+
 export const getAllUserPermisions = async (userId: string) => {
   const permissons = await prisma.permission.findMany({
     where: {

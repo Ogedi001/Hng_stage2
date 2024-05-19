@@ -31,7 +31,9 @@ export const sendEmailVerificationLinkEmail = async (data: {
     html: htmlContent,
   };
   try {
-    await mailTransport.sendMail(mailOptions);
+
+  await mailTransport.sendMail(mailOptions);
+
   } catch (error) {}
 };
 

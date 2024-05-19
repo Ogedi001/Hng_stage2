@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { forgotPasswordController, loginUserController, logOutController, registerUserController, resendEmailVerificationLink, resetPasswordController, userUpdatePasswordController, verifyEmailController } from "../controller/auth-user-controller";
-import { currentUserMiddleware, emailVerificationCheck } from "../middleware";
+import { currentUserMiddleware, emailVerificationCheck ,permissionCheck} from "../middleware";
+
 const router =  Router()
 
 router.route("/signup-user").post(registerUserController)
@@ -23,7 +24,7 @@ router
 .route("/reset-password/:resetToken")
 .post(resetPasswordController);
 
-router.use(currentUserMiddleware,emailVerificationCheck)
+router.use(currentUserMiddleware,emailVerificationCheck,permissionCheck)
 
 router.route("/signout").get(logOutController)
 

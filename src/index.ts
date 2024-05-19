@@ -6,7 +6,7 @@ const PORT = process.env.PORT ||3000
 
   logger.info("connected to the database");
   
-server.listen(3000, () => {
+server.listen(PORT, () => {
     logger.info(`app running on PORT:${PORT} 🔥🔥🔥`)
 })
 

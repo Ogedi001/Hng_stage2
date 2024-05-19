@@ -6,7 +6,7 @@ export interface LogData {
     location?: string;
     zipCode?: string;
     timeZone_name?: string;
-    timeZone_gmt_offset?: string;
+    timeZone_gmt_offset?: number;
     newRole?: RoleName;
     preRole?: RoleName;
     description?: string;

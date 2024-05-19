@@ -118,7 +118,7 @@ model Logout_Log {
   location            String //country //city
   zipCode             String
   timeZone_name       String
-  timeZone_gmt_offset String
+  timeZone_gmt_offset Int
   auditLogId          String   @db.ObjectId
   auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
   createdAt           DateTime @default(now())
@@ -129,7 +129,7 @@ model LogIn_Log {
   location            String //country //city
   zipCode             String
   timeZone_name       String
-  timeZone_gmt_offset String
+  timeZone_gmt_offset Int
   auditLogId          String   @db.ObjectId
   auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
   createdAt           DateTime @default(now())

@@ -30,7 +30,7 @@ export const registerUserController = async (req: Request, res: Response) => {
   if (password !== comfirmPassword)
     throw new BadRequestError("Password do not Match");
   const role = await createRole(RoleName.USER);
-  const data = await createUser({
+  const data = await createUser(role.name,{
     firstname,
     lastname,
     email,
@@ -129,16 +129,17 @@ export const loginUserController = async (req: Request, res: Response) => {
   delete updatedUser.password;
 
   const locationInfo = await getUserLocationInfo(req.body.ipAddress);
-  const location = `${locationInfo.country_name} ${locationInfo.state_prov} ${locationInfo.district} ${locationInfo.city}`;
+  const location = `${locationInfo.city} ${locationInfo.district} ${locationInfo.state_prov} ${locationInfo.country_name}`;
   const zipCode = locationInfo.zipcode;
-  const timeZone_gmt_offset = locationInfo.time_zone.name;
-  locationInfo.time_zone.offset;
+  const timeZone_name = locationInfo.time_zone.name;
+  const timeZone_gmt_offset= locationInfo.time_zone.offset;
 
   
   await createLog({
     logType: ActivityLogType.LOGIN,
     userId: user.id,
     location,
+    timeZone_name,
     timeZone_gmt_offset,
     zipCode,
   });
@@ -154,15 +155,18 @@ export const logOutController = async (req: Request, res: Response) => {
   await blacklistJWTtoken(token);
 
   const locationInfo = await getUserLocationInfo(req.body.ipAddress);
-  const location = `${locationInfo.country_name} ${locationInfo.state_prov} ${locationInfo.district} ${locationInfo.city}`;
+  const location = `${locationInfo.city} ${locationInfo.district} ${locationInfo.state_prov} ${locationInfo.country_name}`;
   const zipCode = locationInfo.zipcode;
-  const timeZone_gmt_offset = locationInfo.time_zone.name;
-  locationInfo.time_zone.offset;
+  const timeZone_name = locationInfo.time_zone.name;
+  const timeZone_gmt_offset= locationInfo.time_zone.offset;
 
+
+  await updateUser_service(user.id, { isLoggedIn: false });
   await createLog({
     logType: ActivityLogType.LOGOUT,
     userId: user.id,
     location,
+    timeZone_name,
     timeZone_gmt_offset,
     zipCode,
   });
