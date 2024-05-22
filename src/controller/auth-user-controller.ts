@@ -86,7 +86,7 @@ export const resendEmailVerificationLink = async (
   });
 };
 
-export const loginUserController = async (req: Request, res: Response) => {
+export const loginUserController = async (req: Request, res: Response, next:NextFunction) => {
   const { email, password } = req.body;
 
   const user = await findUser(email);
@@ -128,7 +128,7 @@ export const loginUserController = async (req: Request, res: Response) => {
   const updatedUser = await updateUser_service(user.id, { isLoggedIn: true });
   delete updatedUser.password;
 
-  const locationInfo = await getUserLocationInfo(req.body.ipAddress);
+  const locationInfo = await getUserLocationInfo(next,req.body.ipAddress);
   const location = `${locationInfo.city} ${locationInfo.district} ${locationInfo.state_prov} ${locationInfo.country_name}`;
   const zipCode = locationInfo.zipcode;
   const timeZone_name = locationInfo.time_zone.name;
@@ -149,12 +149,12 @@ export const loginUserController = async (req: Request, res: Response) => {
   });
 };
 
-export const logOutController = async (req: Request, res: Response) => {
+export const logOutController = async (req: Request, res: Response,next:NextFunction) => {
   const user = req.currentUser!
   const token = req.headers.authorization!.split(" ")[1];
   await blacklistJWTtoken(token);
 
-  const locationInfo = await getUserLocationInfo(req.body.ipAddress);
+  const locationInfo = await getUserLocationInfo(next,req.body.ipAddress);
   const location = `${locationInfo.city} ${locationInfo.district} ${locationInfo.state_prov} ${locationInfo.country_name}`;
   const zipCode = locationInfo.zipcode;
   const timeZone_name = locationInfo.time_zone.name;
