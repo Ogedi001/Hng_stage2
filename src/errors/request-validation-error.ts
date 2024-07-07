@@ -3,7 +3,7 @@ import { CustomError } from "./custom-error";
 import { ValidationError } from "express-validator";
 
 export class RequestValidatorError extends CustomError {
-  statusCode = StatusCodes.BAD_REQUEST;
+  statusCode = StatusCodes.UNPROCESSABLE_ENTITY;
   constructor(private errors: ValidationError[]) {
     super("Invalid Request Parameters");
     //Set every offspring prototype to this prototype
@@ -11,7 +11,7 @@ export class RequestValidatorError extends CustomError {
   }
   serializeErrors() {
     return this.errors.map((err:any) => {
-      return { message: err.msg, field: err.path };
+      return {  field: err.path,message: err.msg };
     });
   }
 }

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
-import logger from "./Logger";
+
 import { Password } from "./helpers";
+import Logger from "./utils/logger";
 
 
 // Initialize Prisma client instance with extensions and event listeners
@@ -15,7 +16,7 @@ prismaClient.$use(async (params, next) => {
     (params.model == "User") &&
     (params.action == "create" || params.action == "update")
   ) {
-    logger.info({ data: params.args.data });
+    Logger.info({ data: params.args.data });
     if (params.args.data.password) {
       const hashedPassword = await Password.toHash(params.args.data.password);
 
@@ -34,7 +35,7 @@ prismaClient.$use(async (params, next) => {
 });
 
 
-prismaClient.$on("query", (e) => logger.info(e));
-prismaClient.$on("error", (e) => logger.error(e));
+prismaClient.$on("query", (e) => Logger.info(e));
+prismaClient.$on("error", (e) => Logger.error(e));
 
 export const prisma = prismaClient;

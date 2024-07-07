@@ -1,18 +1,13 @@
 import "dotenv/config"
 import jwt from "jsonwebtoken";
 import { Request } from "express";
-import { Privacy } from "@prisma/client";
+
 
 export interface Userpayload {
   id: string;
   email: string;
   firstname: string;
-  lastname: string;
-  isEmailVerified: boolean;
-  role:{
-    name:string,
-    roleId:string
-  }
+  lastname: string; 
 }
 
 

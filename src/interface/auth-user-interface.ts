@@ -6,3 +6,8 @@ export interface UserUpdateData{
   isEnabled? :boolean     
   roleId? :string 
  }  
+
+ export interface OrganisationData{
+  name:string,
+  description?:string
+ }

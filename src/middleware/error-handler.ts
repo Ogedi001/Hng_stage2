@@ -2,8 +2,8 @@ import { Prisma } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
 import { CustomError } from "../errors";
-import logger from "../Logger"
-import { AxiosError } from "axios";
+
+import Logger from "../utils/logger";
 
 
 
@@ -14,7 +14,7 @@ export const errorHandlerMiddleware = async (
   next: NextFunction
 ) => {
   if (err instanceof CustomError) {
-    logger.error(err.serializeErrors());
+    Logger.error(err.serializeErrors());
     return res.status(err.statusCode).json({ errors: err.serializeErrors() });
   }
 
@@ -46,51 +46,6 @@ export const errorHandlerMiddleware = async (
     ${err.message}`});
   }
 
-  if (err instanceof AxiosError) {
-    const axiosError = err as AxiosError;
-
-    if (axiosError.response) {
-      logger.error({
-        message: "Axios error response",
-        status: axiosError.response.status,
-        data: axiosError.response.data,
-      });
-      return res.status(axiosError.response.status).json({
-        errors: [
-          {
-            message: "Axios error response",
-            details: axiosError.response.data,
-          },
-        ],
-      });
-    } else if (axiosError.request) {
-      logger.error({
-        message: "No response received from Axios request",
-        request: axiosError.request,
-      });
-      return res.status(StatusCodes.SERVICE_UNAVAILABLE).json({
-        errors: [
-          {
-            message: "No response received from the external service.",
-          },
-        ],
-      });
-    } else {
-      logger.error({
-        message: "Error setting up Axios request",
-        error: axiosError.message,
-      });
-      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-        errors: [
-          {
-            message:
-              "An error occurred while setting up the request to the external service.",
-            details: axiosError.message,
-          },
-        ],
-      });
-    }
-  }
   // Other uncaught errors
    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
     errors: [{ message: err.message }],

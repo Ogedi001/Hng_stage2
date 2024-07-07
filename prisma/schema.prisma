@@ -9,272 +9,28 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "postgres"
   url      = env("DATABASE_URL")
 }
 
-enum RoleName {
-  ADMIN
-  USER
-  MODERATOR
-}
-
-enum ActivityLogType {
-  LOGIN
-  LOGOUT
-  PERMISSION_CHANGE
-  ROLE_ASSIGNMENT
-}
-
-enum Privacy {
-  PRIVATE
-  PUBLIC
-  CONNECTS
-  CUSTOM
-}
-
-enum NotificationType {
-  LIKE
-  MENTION
-  COMMENT
-  POST
-}
-
-enum MediaType {
-  IMAGE
-  VIDEO
-}
-
+//implicit m-m relationship user and organisation
 model User {
-  id                    String         @id @default(auto()) @map("_id") @db.ObjectId
-  email                 String         @unique
-  firstname             String
-  lastname              String
-  middlename            String?
-  password              String
-  isLoggedIn            Boolean        @default(false)
-  isEmailVerified       Boolean        @default(false)
-  isEnabled             Boolean        @default(true)
-  resetPasswordToken    String?        @unique
-  resetPasswordExpires  String?        @unique
-  roleId                String         @db.ObjectId
-  role                  Role           @relation(fields: [roleId], references: [id])
-  userProfile           UserProfile?
-  Token                 Token[]
-  posts                 Post[]
-  likes                 Like[]
-  comments              Comment[]
-  followers             Follow[]       @relation(name: "UserFollows")
-  following             Follow[]       @relation(name: "UserFollowing")
-  sendNotifications     Notification[] @relation(name: "sender")
-  receivedNotifications Notification[] @relation(name: "receiver")
-  permissions           Permission[]
-  auditLog              AuditLog[]
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  userId        String         @id @default(uuid())
+  email         String         @unique
+  firstname     String
+  lastname      String
+  password      String
+  phone         String
+  organisations Organisation[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 }
 
-model UserProfile {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  user            User     @relation(fields: [userId], references: [id])
-  userId          String   @unique @db.ObjectId
-  bio             String?
-  profileImage    String?
-  isPhoneVerified Boolean  @default(false)
-  location        String
-  phoneNumber     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-model Token {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  token     String   @unique
-  expiresAt String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String   @db.ObjectId
-}
-
-model AuditLog {
-  id                    String                 @id @default(auto()) @map("_id") @db.ObjectId
-  logType               ActivityLogType 
-  logOut_logs           Logout_Log[]
-  logIn_logs            LogIn_Log[]
-  roleChange_logs       RoleChange_Log[]
-  permissionChange_Logs PermissionChange_Log[]
-  userId                String                 @db.ObjectId
-  createdBy             User                   @relation(fields: [userId], references: [id])
-  createdAt             DateTime               @default(now())
-  updatedAt             DateTime               @updatedAt
-
-  @@unique([userId, logType])
-  @@index([userId, id])
-}
-
-model Logout_Log {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  location            String //country //city
-  zipCode             String
-  timeZone_name       String
-  timeZone_gmt_offset Int
-  auditLogId          String   @db.ObjectId
-  auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
-  createdAt           DateTime @default(now())
-}
-
-model LogIn_Log {
-  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
-  location            String //country //city
-  zipCode             String
-  timeZone_name       String
-  timeZone_gmt_offset Int
-  auditLogId          String   @db.ObjectId
-  auditLog            AuditLog @relation(fields: [auditLogId], references: [id])
-  createdAt           DateTime @default(now())
-}
-
-model Role {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        RoleName     @unique @default(USER)
-  user        User[]
-  permissions Permission[]
-  locations   String[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  @@index([name, id])
-}
-
-model RoleChange_Log {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  preRole     RoleName
-  newRole     RoleName
-  description String
-  auditLogId  String   @db.ObjectId
-  auditLog    AuditLog @relation(fields: [auditLogId], references: [id])
-  createdAt   DateTime @default(now())
-}
-
-
-model Permission {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  name       String   @unique
-  can_read   Boolean  @default(false)
-  can_write  Boolean  @default(false)
-  can_delete Boolean  @default(false)
-  roleId     String   @db.ObjectId
-  role       Role     @relation(fields: [roleId], references: [id])
-  userId     String?   @db.ObjectId
-  user       User?     @relation(fields: [userId], references: [id])
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([name, id])
-  @@unique([name,userId])
-}
-
-model PermissionChange_Log {
-  id              String   @id @default(auto()) @map("_id") @db.ObjectId
-  permissionName  String
-  pre_can_read    Boolean?
-  pre_can_write   Boolean?
-  pre_can_delete  Boolean?
-  post_can_read   Boolean?
-  post_can_write  Boolean?
-  post_can_delete Boolean?
-  description     String
-  createdAt       DateTime @default(now())
-  auditLogId      String   @db.ObjectId
-  auditLog        AuditLog @relation(fields: [auditLogId], references: [id])
-
-  @@index([permissionName, id])
-}
-
-model Follow {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  follower    User     @relation(name: "UserFollows", fields: [followerId], references: [id])
-  followerId  String   @db.ObjectId
-  following   User     @relation(name: "UserFollowing", fields: [followingId], references: [id])
-  followingId String   @db.ObjectId
+model Organisation {
+  orgId       String   @id @default(uuid())
+  name        String
+  users       User[]
+  description String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  //@@index([followerId, followingId])
-
-  @@unique([followerId, followingId])
-}
-
-model Like {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String   @db.ObjectId
-  post      Post     @relation(fields: [postId], references: [id])
-  postId    String   @db.ObjectId
-  commentId String?  @db.ObjectId
-  comment   Comment? @relation(fields: [commentId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String   @db.ObjectId
-  post      Post     @relation(fields: [postId], references: [id])
-  postId    String   @db.ObjectId
-  likeCount Int      @default(0)
-  likes     Like[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Post {
-  id           String      @id @default(auto()) @map("_id") @db.ObjectId
-  content      String?
-  author       User        @relation(fields: [authorId], references: [id])
-  authorId     String      @db.ObjectId
-  privacy      Privacy     @default(PUBLIC)
-  likeCount    Int         @default(0)
-  commentCount Int         @default(0)
-  tags         String[] // Hashtags or user mentions
-  postMedia    PostMedia[]
-  likes        Like[]
-  comments     Comment[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-}
-
-model Media {
-  id        String      @id @default(auto()) @map("_id") @db.ObjectId
-  url       String
-  type      MediaType
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  postMedia PostMedia[]
-}
-
-model PostMedia {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  postId    String   @db.ObjectId
-  post      Post     @relation(fields: [postId], references: [id])
-  mediaId   String   @db.ObjectId
-  media     Media    @relation(fields: [mediaId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Notification {
-  id         String           @id @default(auto()) @map("_id") @db.ObjectId
-  receiver   User             @relation(name: "receiver", fields: [receiverId], references: [id])
-  receiverId String           @db.ObjectId
-  sender     User             @relation(name: "sender", fields: [senderId], references: [id])
-  senderId   String           @db.ObjectId
-  type       NotificationType
-  read       Boolean          @default(false)
-  postId     String?          @db.ObjectId
-  commentId  String?          @db.ObjectId
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
 }
