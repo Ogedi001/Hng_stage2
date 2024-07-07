@@ -4,8 +4,8 @@ import {
   Password,
   successResponse,
 } from "../helpers";
-import { NextFunction, Request, Response } from "express";
-import {  createUser, findUser } from "../service/auth-service";
+import { Request, Response } from "express";
+import { createUser, findUser } from "../service/auth-service";
 import { BadRequestError } from "../errors";
 import { OrganisationData } from "../interface";
 
@@ -20,23 +20,28 @@ export const registerUserController = async (req: Request, res: Response) => {
     password,
     phone
   }
+  
   const orgData: OrganisationData = {
     name: `${firstname}'s Organisation`,
     description
   }
-  const user = await createUser(userData, orgData)
+  try {
+    const user = await createUser(userData, orgData)
 
-  const accessToken = generateJWT({
-    id: user.userId,
-    email: user.email,
-    firstname: user.firstname,
-    lastname: user.lastname
-  })
+    const accessToken = generateJWT({
+      id: user.userId,
+      email: user.email,
+      firstname: user.firstname,
+      lastname: user.lastname
+    })
 
-  //delete user.password
+    const data = { accessToken, user }
 
-  const data = { accessToken, user }
-  return successResponse(res, StatusCodes.CREATED, "Registration successful", data);
+    return successResponse(res, StatusCodes.CREATED, "Registration successful", data);
+
+  } catch (error) {
+    throw new BadRequestError("Registration unsuccessful")
+  }
 };
 
 
@@ -47,16 +52,18 @@ export const loginUserController = async (req: Request, res: Response) => {
 
   const user = await findUser(email);
 
-  if (!user) throw new BadRequestError("User not found");
-
+  if (!user) //throw new BadRequestError("User not found");
+  throw new BadRequestError("Authentication failed")
 
   const passwordMatch = await Password.comparePassword(
     password,
     user?.password!
   );
 
-  if (!passwordMatch) throw new BadRequestError("Invalid credentials");
-
+  if (!passwordMatch)// throw new BadRequestError("Invalid credentials");
+  throw new BadRequestError("Authentication failed")
+  try {
+    
   const accessToken = generateJWT({
     id: user.userId,
     email: user.email,
@@ -67,8 +74,12 @@ export const loginUserController = async (req: Request, res: Response) => {
   delete user.password
 
   const data = { accessToken, user }
-
+  
   return successResponse(res, StatusCodes.OK, "Login successful", data
   );
+  } catch (error) {
+    throw new BadRequestError("Authentication failed")
+  }
+
 };
 

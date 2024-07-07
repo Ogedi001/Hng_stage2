@@ -1,13 +1,15 @@
-//abstract class can't be instantited, basically stand as blueprint for other class
-export abstract class CustomError extends Error{
-    //abstract property must be implemented by offspring
-abstract statusCode :number
+// Abstract class can't be instantiated, basically stands as blueprint for other classes
+export abstract class CustomError extends Error {
+    // Abstract properties must be implemented by offspring
+    abstract statusCode: number;
+    abstract status: string;
+
     constructor(message: string) {
-        super(message)
-        //Set every offspring prototype to CustomError prototype
-        Object.setPrototypeOf(this, CustomError.prototype)
+        super(message);
+        // Set every offspring prototype to CustomError prototype
+        Object.setPrototypeOf(this, CustomError.prototype);
     }
 
-    //abstract method must be implemented by offspring
-    abstract serializeErrors(): { message: string; fields?:string}[]
+    // Abstract method must be implemented by offspring
+    abstract serializeErrors(): { status: string; message: string; statusCode: number };
 }

@@ -3,13 +3,14 @@ import { CustomError } from "./custom-error";
 
 export class NotFoundError extends CustomError {
     statusCode = StatusCodes.NOT_FOUND;
+    status ='Not found';
     constructor(message: string) {
         super(message)
         //Set every offspring prototype to this prototype
         Object.setPrototypeOf(this, NotFoundError.prototype)
     }
     serializeErrors() {
-        return [{ message: this.message }]
+        return { status: this.status, message: this.message, statusCode: this.statusCode 
     }
-
+}
 }

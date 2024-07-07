@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { Request, Response, NextFunction } from "express";
 import { StatusCodes } from "http-status-codes";
-import { CustomError } from "../errors";
+import { CustomError, RequestValidatorError } from "../errors";
 
 import Logger from "../utils/logger";
 
@@ -13,9 +13,16 @@ export const errorHandlerMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  if (err instanceof CustomError) {
+  if(err instanceof RequestValidatorError){
     Logger.error(err.serializeErrors());
     return res.status(err.statusCode).json({ errors: err.serializeErrors() });
+  }
+
+  if (err instanceof CustomError) {
+    
+    Logger.error(err.serializeErrors());
+    const error = err.serializeErrors()
+    return res.status(err.statusCode).json({...error });
   }
 
   // Prisma related errors

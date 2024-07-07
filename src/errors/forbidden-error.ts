@@ -3,6 +3,7 @@ import { CustomError } from "./custom-error";
 
 export class ForbiddenError extends CustomError {
     statusCode = StatusCodes.FORBIDDEN;
+    status= 'Forbidden';
     constructor(message?:string) {
         const errMsg  = message?message:'Forbidden'
         super(errMsg)
@@ -10,6 +11,7 @@ export class ForbiddenError extends CustomError {
         Object.setPrototypeOf(this, ForbiddenError.prototype)
     }
     serializeErrors() {
-        return [{ message: this.message }]
+        return { status: this.status, message: this.message, statusCode: this.statusCode 
     }
+}
 }

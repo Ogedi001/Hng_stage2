@@ -1,9 +1,8 @@
 /// <reference path="../typings/index.d.ts" />
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { Userpayload, verifyJwtToken } from "../helpers";
-import { StatusCodes } from "http-status-codes";
-import { BadRequestError } from "../errors";
 import Logger from "../utils/logger";
+import { UnauthorizedError } from "../errors";
 
 const AUTH_HEADER_PREFIX = "Bearer";
 let token: any;
@@ -17,10 +16,7 @@ export const currentUserMiddleware: RequestHandler  = async (
     token = authHeader.split(" ")[1];
   }
   if (!token) {
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "User Not Logged In" });
-    return;
+    throw new UnauthorizedError("User Not Logged In")
   }
 
   try {
@@ -29,9 +25,7 @@ export const currentUserMiddleware: RequestHandler  = async (
     next();
   } catch (error) {
     Logger.info("Token Verification Error: ", error);
-    res
-      .status(StatusCodes.UNAUTHORIZED)
-      .json({ message: "User Not Logged In" });
+    throw new UnauthorizedError("User Not Logged In")
   }
 };
 

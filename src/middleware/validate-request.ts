@@ -9,6 +9,7 @@ export const validateRequestMiddleware = (
   next: NextFunction
 ) => {
   const errors = validationResult(req);
+  
   if (!errors.isEmpty()) {
     throw new RequestValidatorError(errors.array());
   }

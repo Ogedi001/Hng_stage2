@@ -3,6 +3,7 @@ import { CustomError } from "./custom-error";
 
 export class UnauthorizedError extends CustomError {
     statusCode = StatusCodes.UNAUTHORIZED;
+    status = "unauthorized";
     constructor(message?: string) {
         const errMsg = message?message:'Not Authorized'
         super(errMsg)
@@ -10,8 +11,7 @@ export class UnauthorizedError extends CustomError {
         Object.setPrototypeOf(this, UnauthorizedError.prototype)
     }
     serializeErrors() {
-        return [{ message: this.message }]
+        return { status: this.status, message: this.message, statusCode: this.statusCode 
     }
-
-
+}
 }
