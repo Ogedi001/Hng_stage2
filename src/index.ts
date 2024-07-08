@@ -3,7 +3,7 @@ import { prisma } from './client';
 import Logger from './utils/logger';
 
 
-const PORT = process.env.PORT ||8080
+const PORT = process.env.PORT || 3012
 
 const startServer = () => {
   Logger.info("connected to the database");
