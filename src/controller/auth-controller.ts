@@ -25,6 +25,15 @@ export const registerUserController = async (req: Request, res: Response) => {
     name: `${firstname}'s Organisation`,
     description
   }
+
+  const existingUser = await findUser(email)
+
+  if (existingUser) {
+    return res.status(StatusCodes.UNPROCESSABLE_ENTITY).json({
+      errors: [{ field: 'email', message: 'Email already exists' }],
+    });
+  }
+
   try {
     const user = await createUser(userData, orgData)
 
