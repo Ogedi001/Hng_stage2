@@ -6,15 +6,16 @@ import { OrganisationData } from "../interface";
 import { BadRequestError } from "../errors";
 
 
-//[GET] /api/users/:id
+
+// [GET] /api/users/:id
 export const getUser_Controller = async (req: Request, res: Response) => {
-    const { id } = req.params
-    const user = await findUserByIdService(id)
+    const { id } = req.params;
+    const user = await findUserByIdService(id);
     if (user) {
-        delete user.password
+        delete user.password;
     }
-    return successResponse(res, StatusCodes.OK, "Login successful", user)
-}
+    return successResponse(res, StatusCodes.OK, "User found", user);
+};
 
 
 //[GET] /api/organisations
@@ -57,7 +58,9 @@ export const addUserToOrganisation = async (req: Request, res: Response) => {
         throw new BadRequestError("organisation do not exist")
     }
     const user = await findUserByIdService(userId)
-    if (!user) { }
+    if (!user) {
+        throw new BadRequestError("invalid userId")
+     }
     const userAlreadyExist = await getUserOganisation(orgId, userId)
     if (userAlreadyExist) {
         throw new BadRequestError("user added already")

@@ -16,7 +16,7 @@ describe('Token Generation and Verification', () => {
     const decodedPayload = verifyJwtToken(token);
     expect(decodedPayload.id).toBe(payload.id);
     expect(decodedPayload.email).toBe(payload.email);
-    // Add more assertions as needed for other fields in the payload
+   
   });
 
   it('should verify a valid JWT token', () => {
@@ -30,6 +30,5 @@ describe('Token Generation and Verification', () => {
     const decodedPayload = verifyJwtToken(token);
     expect(decodedPayload.id).toBe(payload.id);
     expect(decodedPayload.email).toBe(payload.email);
-    // Add more assertions as needed for other fields in the payload
   });
 });
